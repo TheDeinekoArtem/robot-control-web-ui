@@ -79,6 +79,12 @@ def handle_toggle_obstacle(data):
     x = data.get('x')
     y = data.get('y')
     
+    # ЗАХИСТ: Не дозволяємо ставити стіну прямо на робота!
+    if x == robot.x and y == robot.y:
+        print("⚠️ Спроба поставити стіну на робота! Ігноруємо.")
+        socketio.emit('path_error', {'message': 'Неможливо поставити перешкоду на робота!'})
+        return
+    
     if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT:
         grid[y][x] = 1 if grid[y][x] == 0 else 0
         print(f"🧱 Перешкода змінена в ({x}, {y})")
@@ -107,13 +113,26 @@ def handle_toggle_obstacle(data):
 
 @socketio.on('recharge')
 def handle_recharge():
-    """Підзарядка робота"""
-    robot.battery = 100.0
-    if robot.status == "error":
-        robot.status = "idle" # Скидаємо статус помилки
-    print("⚡ Робот підзаряджений до 100%")
-    # Одразу відправляємо новий стан на фронт
-    socketio.emit('robot_state', robot.get_state())
+    """Відправляє робота на базу (0, 0) для підзарядки"""
+    print("🔋 Команда: Повернення на базу!")
+    
+    start_pos = (robot.x, robot.y)
+    goal_pos = (0, 0) # Координати нашої бази
+    
+    if start_pos == goal_pos:
+        # Якщо вже на базі
+        robot.battery = 100.0
+        robot.status = "idle"
+        socketio.emit('robot_state', robot.get_state())
+        return
+
+    # Будуємо маршрут на базу
+    path = astar(grid, start_pos, goal_pos)
+    if path:
+        robot.set_path(path)
+        socketio.emit('path_found', {'path': path})
+    else:
+        socketio.emit('path_error', {'message': 'База недоступна! Шлях заблоковано стінами.'})
 
 if __name__ == '__main__':
     print("🚀 Запуск WebSocket сервера на http://127.0.0.1:5000...")

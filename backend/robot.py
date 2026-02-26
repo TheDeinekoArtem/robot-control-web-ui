@@ -20,19 +20,23 @@ class VirtualRobot:
             self.status = "idle"
 
     def move_step(self):
-        """Робить один крок по маршруту (викликатиметься сервером кожні пів секунди)"""
+        """Робить один крок по маршруту"""
         if self.status == "moving" and self.path:
             if self.battery > 0:
-                # Беремо наступну точку маршруту і видаляємо її зі списку
+                prev_x, prev_y = self.x, self.y
                 next_point = self.path.pop(0)
                 self.x, self.y = next_point
                 
-                # Симуляція витрати батареї (наприклад, 0.5% за кожен крок)
-                self.battery -= 0.5
+                # РІЗНЕ СПОЖИВАННЯ ЕНЕРГІЇ
+                is_diagonal = abs(self.x - prev_x) == 1 and abs(self.y - prev_y) == 1
+                self.battery -= (0.7 if is_diagonal else 0.5)
                 
-                # Якщо точок більше немає — ми приїхали
                 if not self.path:
                     self.status = "idle"
+                    
+                # Якщо приїхали на базу (0, 0) - автоматично заряджаємось
+                if self.x == 0 and self.y == 0:
+                    self.battery = 100.0
             else:
                 self.status = "error" # Батарея сіла
 

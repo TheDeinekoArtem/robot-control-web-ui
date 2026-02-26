@@ -159,7 +159,7 @@ createApp({
             robot,
             handleLeftClick,
             handleRightClick,
-            emergencyStop
+            emergencyStop,
             recharge
         };
     }
