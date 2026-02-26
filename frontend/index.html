@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robot Control Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+    <div id="app" class="dashboard">
+        <div class="map-container">
+            <h2>Occupancy Grid Map</h2>
+            <p class="hint">Лівий клік: Встановити ціль | Правий клік: Додати/Видалити перешкоду</p>
+            <canvas id="gridCanvas" width="600" height="600" 
+                    @contextmenu.prevent="handleRightClick" 
+                    @click="handleLeftClick">
+            </canvas>
+        </div>
+
+        <div class="telemetry-panel">
+            <h2>Телеметрія</h2>
+            
+            <div class="status-card">
+                <p><strong>Статус:</strong> <span :class="robot.status">{{ robot.status }}</span></p>
+                <p><strong>Координати:</strong> ({{ robot.x }}, {{ robot.y }})</p>
+                <p><strong>Батарея:</strong> {{ robot.battery }}%</p>
+            </div>
+
+            <div class="controls">
+                <h3>Керування</h3>
+                <button @click="emergencyStop" class="btn-danger">Екстрена Зупинка</button>
+            </div>
+
+            <div class="controls">
+                <h3>Керування</h3>
+                <button @click="emergencyStop" class="btn-danger">Екстрена Зупинка</button>
+                <button @click="recharge" class="btn-success" style="margin-top: 10px;">⚡ Підзарядити</button>
+            </div>
+            
+            <div class="connection-status" :class="{ 'connected': isConnected }">
+                {{ isConnected ? '🟢 Підключено до сервера' : '🔴 Відключено' }}
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

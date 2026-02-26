@@ -80,18 +80,40 @@ def handle_toggle_obstacle(data):
     y = data.get('y')
     
     if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT:
-        # Змінюємо 0 на 1, або 1 на 0 (перемикач)
         grid[y][x] = 1 if grid[y][x] == 0 else 0
-        print(f"🧱 Перешкода змінена в координатах ({x}, {y})")
+        print(f"🧱 Перешкода змінена в ({x}, {y})")
         
         # Відправляємо оновлену карту всім
         socketio.emit('map_data', {'width': GRID_WIDTH, 'height': GRID_HEIGHT, 'grid': grid})
         
-        # Логіка безпеки: якщо робот їхав і хтось поставив стіну - зупиняємо його
-        if robot.status == "moving":
-            robot.set_path([])
-            robot.status = "idle"
-            print("⚠️ Робот екстрено зупинений через зміну карти.")
+        # РОЗУМНИЙ ПЕРЕРАХУНОК МАРШРУТУ
+        if robot.status == "moving" and robot.path:
+            target = robot.path[-1] # Кінцева ціль (остання точка масиву)
+            start_pos = (robot.x, robot.y) # Де робот зараз
+            
+            print(f"🔄 Перерахунок маршруту до {target}...")
+            new_path = astar(grid, start_pos, target)
+            
+            if new_path:
+                print("✅ Знайдено новий шлях в обхід!")
+                robot.set_path(new_path)
+                socketio.emit('path_found', {'path': new_path})
+            else:
+                print("❌ Шлях повністю заблоковано стінами.")
+                robot.set_path([])
+                robot.status = "error"
+                socketio.emit('path_found', {'path': []}) # Прибираємо зелену лінію
+                socketio.emit('path_error', {'message': 'Шлях заблоковано! Робот не може дістатися цілі.'})
+
+@socketio.on('recharge')
+def handle_recharge():
+    """Підзарядка робота"""
+    robot.battery = 100.0
+    if robot.status == "error":
+        robot.status = "idle" # Скидаємо статус помилки
+    print("⚡ Робот підзаряджений до 100%")
+    # Одразу відправляємо новий стан на фронт
+    socketio.emit('robot_state', robot.get_state())
 
 if __name__ == '__main__':
     print("🚀 Запуск WebSocket сервера на http://127.0.0.1:5000...")

@@ -1,0 +1,112 @@
+/* Базові налаштування */
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #1e1e2e; /* Темний фон */
+    color: #cdd6f4; /* Світлий текст */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Головний контейнер (сітка) */
+.dashboard {
+    display: flex;
+    gap: 30px;
+    background-color: #181825;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Налаштування Canvas (Карти) */
+.map-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+canvas {
+    background-color: #313244;
+    border: 2px solid #45475a;
+    border-radius: 8px;
+    cursor: crosshair;
+}
+
+.hint {
+    font-size: 0.9em;
+    color: #a6adc8;
+    margin-bottom: 10px;
+}
+
+/* Панель телеметрії */
+.telemetry-panel {
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.status-card {
+    background-color: #313244;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #45475a;
+}
+
+.status-card p {
+    margin: 10px 0;
+    font-size: 1.1em;
+}
+
+/* Статуси робота (кольори) */
+.moving { color: #a6e3a1; font-weight: bold; } /* Зелений */
+.idle { color: #f9e2af; font-weight: bold; }   /* Жовтий */
+.error { color: #f38ba8; font-weight: bold; }  /* Червоний */
+
+/* Кнопки */
+button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-danger {
+    background-color: #f38ba8;
+    color: #11111b;
+}
+
+.btn-danger:hover {
+    background-color: #e64566;
+}
+
+/* Статус підключення WebSocket */
+.connection-status {
+    margin-top: auto;
+    padding: 10px;
+    text-align: center;
+    background-color: #45475a;
+    border-radius: 6px;
+    font-weight: bold;
+}
+
+.connection-status.connected {
+    background-color: #a6e3a1;
+    color: #11111b;
+}
+
+.btn-success {
+    background-color: #a6e3a1;
+    color: #11111b;
+}
+
+.btn-success:hover {
+    background-color: #8ce184;
+}
