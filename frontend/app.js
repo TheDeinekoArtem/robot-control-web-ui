@@ -3,9 +3,9 @@ const { createApp, ref, onMounted } = Vue;
 createApp({
     setup() {
         // --- РЕАКТИВНІ ЗМІННІ ---
-        // Ці змінні автоматично оновлюють HTML, коли змінюються
         const isConnected = ref(false);
-        const robot = ref({ x: 0, y: 0, status: 'idle', battery: 100 });
+        // НОВЕ: Додали порожній масив history в початковий стан
+        const robot = ref({ x: 0, y: 0, status: 'idle', battery: 100, history: [] });
         
         // Змінні для карти
         const gridWidth = ref(20);
@@ -49,12 +49,38 @@ createApp({
                 ctx.lineWidth = 4;
                 ctx.beginPath();
                 currentPath.value.forEach((point, index) => {
-                    // Рахуємо центр клітинки
                     const cx = point[0] * cellW + cellW / 2;
                     const cy = point[1] * cellH + cellH / 2;
                     if (index === 0) ctx.moveTo(cx, cy);
                     else ctx.lineTo(cx, cy);
                 });
+                ctx.stroke();
+            }
+
+            // 2.5 Малюємо хвіст (історію пройденого шляху)
+            if (robot.value.history && robot.value.history.length > 0) {
+                ctx.beginPath();
+                // Напівпрозорий синій колір, що збігається з кольором робота
+                ctx.strokeStyle = 'rgba(137, 180, 250, 0.050)'; 
+                ctx.lineWidth = cellW / 3; // Товщина лінії відносно клітинки
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+
+                const startX = robot.value.history[0][0] * cellW + cellW / 2;
+                const startY = robot.value.history[0][1] * cellH + cellH / 2;
+                ctx.moveTo(startX, startY);
+
+                for (let i = 1; i < robot.value.history.length; i++) {
+                    const px = robot.value.history[i][0] * cellW + cellW / 2;
+                    const py = robot.value.history[i][1] * cellH + cellH / 2;
+                    ctx.lineTo(px, py);
+                }
+
+                // Доводимо лінію до поточної позиції робота
+                const currentX = robot.value.x * cellW + cellW / 2;
+                const currentY = robot.value.y * cellH + cellH / 2;
+                ctx.lineTo(currentX, currentY);
+
                 ctx.stroke();
             }
 
