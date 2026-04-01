@@ -26,6 +26,8 @@
                 <p><strong>Статус:</strong> <span :class="robot.status">{{ robot.status }}</span></p>
                 <p><strong>Координати:</strong> ({{ robot.x }}, {{ robot.y }})</p>
                 <p><strong>Батарея:</strong> {{ robot.battery }}%</p>
+
+                <p v-if="robot.battery < 30" class="low-battery-warning">⚠️ Низький заряд! Поверніться на базу.</p>
             </div>
 
             <div class="controls">

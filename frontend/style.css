@@ -110,3 +110,18 @@ button {
 .btn-success:hover {
     background-color: #8ce184;
 }
+
+/* Анімація низького заряду батареї */
+.low-battery-warning {
+    color: #f38ba8;
+    font-weight: bold;
+    font-size: 0.9em;
+    margin-top: 15px;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+}
