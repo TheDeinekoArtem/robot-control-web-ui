@@ -78,7 +78,7 @@ class VirtualRobot:
             # Якщо приїхали на базу (0, 0) - заряджаємось і стираємо хвіст
             if self.x == 0 and self.y == 0:
                 self.battery = 100.0
-                self.history = []
+                # self.history = []
 
     def get_state(self):
         """Повертає поточний стан робота"""
