@@ -61,7 +61,8 @@ class VirtualRobot:
                         return
 
             # Якщо всі перевірки пройдені — фізично робимо крок
-            if (self.x, self.y) not in self.history:
+            # Записуємо крок завжди, якщо це нова точка відносно ОСТАННЬОГО кроку
+            if not self.history or self.history[-1] != (self.x, self.y):
                 self.history.append((self.x, self.y))
 
             self.x, self.y = next_point
