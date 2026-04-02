@@ -64,6 +64,15 @@ def handle_set_target(data):
     goal_pos = (target_x, target_y)
     print(f"📍 Розрахунок маршруту: {start_pos} -> {goal_pos}")
 
+    # Перевірка на екстрену зупинку (або клік по самому собі)
+    if start_pos == goal_pos:
+        print("🛑 Зупинка (ціль збігається з поточними координатами).")
+        robot.set_path([])
+        robot.status = "idle"
+        socketio.emit("path_found", {"path": []})  # Прибираємо зелену лінію
+        socketio.emit("robot_state", robot.get_state())  # Оновлюємо статус на фронтенді
+        return
+
     # Викликаємо наш алгоритм A*
     path = astar(grid, start_pos, goal_pos)
 
