@@ -5,6 +5,7 @@ eventlet.monkey_patch()  # Важливо для асинхронної робо
 
 from flask import Flask, jsonify
 from flask_socketio import SocketIO
+from datetime import datetime
 
 # Імпортуємо наші власні модулі
 from robot import VirtualRobot
@@ -15,11 +16,21 @@ app.config["SECRET_KEY"] = "my_secret_key"
 # Вказуємо async_mode='eventlet' для максимальної продуктивності
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
 
+
+def send_log(message):
+    """Відправляє лог із часом на фронтенд і дублює в консоль"""
+    time_str = datetime.now().strftime("%H:%M:%S")
+    formatted_msg = f"[{time_str}] {message}"
+    print(formatted_msg)
+    socketio.emit("server_log", {"time": time_str, "message": message})
+
+
 # --- СТАН СЕРВЕРА ---
 # Створюємо карту 20x20. Початково вся заповнена нулями (вільно).
 GRID_WIDTH = 20
 GRID_HEIGHT = 20
 grid = [[0 for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
+simulation_delay = 0.5
 
 # Створюємо нашого робота у стартовій точці (0, 0)
 robot = VirtualRobot(start_x=0, start_y=0)
@@ -36,13 +47,13 @@ def simulation_loop():
             robot.move_step(grid, astar)
 
         socketio.emit("robot_state", robot.get_state())
-        socketio.sleep(0.5)
+        socketio.sleep(simulation_delay)
 
 
 @socketio.on("connect")
 def handle_connect():
     global background_thread
-    print("🟢 Клієнт (браузер) підключився!")
+    send_log("🟢 Клієнт (браузер) підключився!")
 
     # Запускаємо фоновий цикл симуляції при першому підключенні
     if background_thread is None:
@@ -63,11 +74,11 @@ def handle_set_target(data):
 
     start_pos = (robot.x, robot.y)
     goal_pos = (target_x, target_y)
-    print(f"📍 Розрахунок маршруту: {start_pos} -> {goal_pos}")
+    send_log(f"📍 Розрахунок маршруту: {start_pos} -> {goal_pos}")
 
     # Перевірка на екстрену зупинку (або клік по самому собі)
     if start_pos == goal_pos:
-        print("🛑 Зупинка (ціль збігається з поточними координатами).")
+        send_log("🛑 Зупинка (ціль збігається з поточними координатами).")
         robot.set_path([])
         robot.status = "idle"
         socketio.emit("path_found", {"path": []})  # Прибираємо зелену лінію
@@ -78,12 +89,12 @@ def handle_set_target(data):
     path = astar(grid, start_pos, goal_pos)
 
     if path:
-        print(f"✅ Маршрут знайдено! Кількість кроків: {len(path)}")
+        send_log(f"✅ Маршрут знайдено! Кількість кроків: {len(path)}")
         robot.set_path(path)
         # Відправляємо маршрут на фронтенд, щоб намалювати зелену лінію
         socketio.emit("path_found", {"path": path})
     else:
-        print("❌ Шляху немає (ціль недосяжна або заблокована)!")
+        send_log("❌ Шляху немає (ціль недосяжна або заблокована)!")
         robot.status = "error"
         socketio.emit(
             "path_error", {"message": "Неможливо побудувати маршрут. Перешкода!"}
@@ -98,7 +109,7 @@ def handle_toggle_obstacle(data):
 
     # ЗАХИСТ: Не дозволяємо ставити стіну прямо на робота!
     if x == robot.x and y == robot.y:
-        print("⚠️ Спроба поставити стіну на робота! Ігноруємо.")
+        send_log("⚠️ Спроба поставити стіну на робота! Ігноруємо.")
         socketio.emit(
             "path_error", {"message": "Неможливо поставити перешкоду на робота!"}
         )
@@ -106,7 +117,7 @@ def handle_toggle_obstacle(data):
 
     if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT:
         grid[y][x] = 1 if grid[y][x] == 0 else 0
-        print(f"🧱 Перешкода змінена в ({x}, {y})")
+        send_log(f"🧱 Перешкода змінена в ({x}, {y})")
 
         # Відправляємо оновлену карту всім
         socketio.emit(
@@ -118,15 +129,15 @@ def handle_toggle_obstacle(data):
             target = robot.path[-1]  # Кінцева ціль (остання точка масиву)
             start_pos = (robot.x, robot.y)  # Де робот зараз
 
-            print(f"🔄 Перерахунок маршруту до {target}...")
+            send_log(f"🔄 Перерахунок маршруту до {target}...")
             new_path = astar(grid, start_pos, target)
 
             if new_path:
-                print("✅ Знайдено новий шлях в обхід!")
+                send_log("✅ Знайдено новий шлях в обхід!")
                 robot.set_path(new_path)
                 socketio.emit("path_found", {"path": new_path})
             else:
-                print("❌ Шлях повністю заблоковано стінами.")
+                send_log("❌ Шлях повністю заблоковано стінами.")
                 robot.set_path([])
                 robot.status = "error"
                 socketio.emit("path_found", {"path": []})  # Прибираємо зелену лінію
@@ -139,7 +150,7 @@ def handle_toggle_obstacle(data):
 @socketio.on("recharge")
 def handle_recharge():
     """Відправляє робота на базу (0, 0) для підзарядки"""
-    print("🔋 Команда: Повернення на базу!")
+    send_log("🔋 Команда: Повернення на базу!")
 
     start_pos = (robot.x, robot.y)
     goal_pos = (0, 0)  # Координати нашої бази
@@ -166,7 +177,7 @@ def handle_recharge():
 def handle_clear_map():
     """Повністю очищає карту від перешкод"""
     global grid
-    print("🧹 Очищення карти...")
+    send_log("🧹 Очищення карти...")
 
     # Створюємо нову чисту матрицю
     grid = [[0 for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
@@ -190,7 +201,7 @@ def handle_generate_maze(data):
     """Генерує випадкові перешкоди на карті з вказаною щільністю"""
     global grid
     density = data.get("density", 0.2)  # Наприклад, 0.25 (це 25%)
-    print(f"🎲 Генерація лабіринту (щільність {density*100}%)...")
+    send_log(f"🎲 Генерація лабіринту (щільність {int(density*100)}%)...")
 
     target = robot.path[-1] if robot.path else None
 
@@ -224,6 +235,19 @@ def handle_generate_maze(data):
             socketio.emit(
                 "path_error", {"message": "Згенерований лабіринт заблокував шлях!"}
             )
+
+
+@socketio.on("set_speed")
+def handle_set_speed(data):
+    """Змінює швидкість руху робота"""
+    global simulation_delay
+    speed_level = int(data.get("speed", 3))
+
+    # Словник затримок: 1=повільно(1с), 3=норма(0.5с), 5=турбо(0.1с)
+    delays = {1: 1.0, 2: 0.75, 3: 0.5, 4: 0.25, 5: 0.1}
+    simulation_delay = delays.get(speed_level, 0.5)
+
+    send_log(f"⚡ Швидкість симуляції змінено на рівень {speed_level}/5")
 
 
 if __name__ == "__main__":

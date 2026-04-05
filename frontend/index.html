@@ -3,48 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Robot Control Dashboard</title>
+    <title>IoE Agent Control Dashboard</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
 <body>
-    <div id="app" class="dashboard">
-        <div class="map-container">
-            <h2>Occupancy Grid Map</h2>
-            <p class="hint">Лівий клік: Встановити ціль | Правий клік: Додати/Видалити перешкоду</p>
-            <canvas id="gridCanvas" width="600" height="600" 
-                    @contextmenu.prevent="handleRightClick" 
-                    @click="handleLeftClick">
-            </canvas>
+    <div id="app">
+        <!-- ГОЛОВНИЙ ДАШБОРД -->
+        <div class="dashboard">
+            <div class="map-container">
+                <h2>Occupancy Grid Map</h2>
+                <p class="hint">Лівий клік: Встановити ціль | Правий клік: Додати/Видалити перешкоду</p>
+                <canvas id="gridCanvas" width="600" height="600" 
+                        @contextmenu.prevent="handleRightClick" 
+                        @click="handleLeftClick">
+                </canvas>
+            </div>
+
+            <div class="telemetry-panel">
+                <!-- НОВИЙ ЗАГОЛОВОК З ІКОНКОЮ НАЛАШТУВАНЬ -->
+                <div class="panel-header">
+                    <h2>Телеметрія</h2>
+                    <button @click="showModal = true" class="icon-btn" title="Налаштування та Журнал">⚙️</button>
+                </div>
+                
+                <div class="status-card">
+                    <p><strong>Статус:</strong> <span :class="robot.status">{{ robot.status }}</span></p>
+                    <p><strong>Координати:</strong> ({{ robot.x }}, {{ robot.y }})</p>
+                    <p><strong>Батарея:</strong> {{ robot.battery }}%</p>
+                    <p v-if="robot.battery < 30" class="low-battery-warning">⚠️ Низький заряд! Поверніться на базу.</p>
+                </div>
+
+                <div class="controls">
+                    <h3>Керування</h3>
+                    <button @click="emergencyStop" class="btn-danger">Екстрена Зупинка</button>
+                    <button @click="recharge" class="btn-success" style="margin-top: 10px;">⚡ Підзарядити</button>
+                </div>
+
+                <div class="connection-status" :class="{ 'connected': isConnected }">
+                    {{ isConnected ? '🟢 Підключено до сервера' : '🔴 Відключено' }}
+                </div>
+            </div>
         </div>
 
-        <div class="telemetry-panel">
-            <h2>Телеметрія</h2>
-            
-            <div class="status-card">
-                <p><strong>Статус:</strong> <span :class="robot.status">{{ robot.status }}</span></p>
-                <p><strong>Координати:</strong> ({{ robot.x }}, {{ robot.y }})</p>
-                <p><strong>Батарея:</strong> {{ robot.battery }}%</p>
-
-                <p v-if="robot.battery < 30" class="low-battery-warning">⚠️ Низький заряд! Поверніться на базу.</p>
-            </div>
-
-            <div class="controls">
-                <h3>Керування</h3>
-                <button @click="emergencyStop" class="btn-danger">Екстрена Зупинка</button>
-                <button @click="recharge" class="btn-success" style="margin-top: 10px;">⚡ Підзарядити</button>
-                <h3>Середовище</h3>
-                <div class="slider-container">
-                    <label for="densitySlider">Щільність перешкод: <strong>{{ mazeDensity }}%</strong></label>
-                    <input type="range" id="densitySlider" v-model="mazeDensity" min="5" max="40" step="1">
+        <!-- СПЛИВАЮЧЕ ВІКНО (МОДАЛКА) -->
+        <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>⚙️ Розширені налаштування</h2>
+                    <button class="close-btn" @click="showModal = false">✖</button>
                 </div>
-                <button @click="generateMaze" class="btn-primary" style="margin-top: 10px;">🎲 Згенерувати лабіринт</button>
-                <button @click="clearMap" class="btn-secondary" style="margin-top: 10px;">🧹 Очистити карту</button>
-            </div>
-            
-            <div class="connection-status" :class="{ 'connected': isConnected }">
-                {{ isConnected ? '🟢 Підключено до сервера' : '🔴 Відключено' }}
+                
+                <div class="modal-body">
+                    <!-- 1. Блок середовища -->
+                    <div class="modal-section">
+                        <h3>Середовище</h3>
+                        <div class="slider-container">
+                            <label for="densitySlider">Щільність перешкод: <strong>{{ mazeDensity }}%</strong></label>
+                            <input type="range" id="densitySlider" v-model="mazeDensity" min="5" max="40" step="1">
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-top: 15px;">
+                            <button @click="generateMaze" class="btn-primary">Згенерувати перешкоди</button>
+                            <button @click="clearMap" class="btn-danger" style="background-color: #f38ba8; color:#11111b;">Очистити карту</button>
+                        </div>
+                    </div>
+
+                    <!-- 2. Блок налаштування симуляції (Тепер тут!) -->
+                    <div class="modal-section">
+                        <div class="section-header-with-info">
+                            <h3>Симуляція</h3>
+                            <div class="info-tooltip">
+                                <span class="info-icon">ℹ️</span>
+                                <div class="tooltip-text">
+                                    <strong>Швидкість (клітинок/сек):</strong><br>
+                                    Рівень 1: 1.0 кл/с (повільно)<br>
+                                    Рівень 2: ~1.3 кл/с<br>
+                                    Рівень 3: 2.0 кл/с (норма)<br>
+                                    Рівень 4: 4.0 кл/с<br>
+                                    Рівень 5: 10.0 кл/с (турбо)
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slider-container">
+                            <label for="speedSlider">Швидкість агента: <strong>Рівень {{ simSpeed }}</strong></label>
+                            <input type="range" id="speedSlider" v-model="simSpeed" @input="changeSpeed" min="1" max="5" step="1">
+                        </div>
+                    </div>
+
+                    <!-- 3. Блок Терміналу -->
+                    <div class="modal-section" style="flex-grow: 1; display: flex; flex-direction: column;">
+                        <h3>Термінал подій</h3>
+                        <div class="log-panel" style="margin-top: 0;">
+                            <div class="log-container" style="height: 250px;">
+                                <div v-for="(log, index) in logs" :key="index" class="log-entry">
+                                    <span class="log-time">[{{ log.time }}]</span> {{ log.message }}
+                                </div>
+                                <div v-if="logs.length === 0" class="log-entry" style="color:#6c7086;">Очікування подій...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
