@@ -1,4 +1,5 @@
 import eventlet
+import random
 
 eventlet.monkey_patch()  # Важливо для асинхронної роботи WebSocket
 
@@ -159,6 +160,70 @@ def handle_recharge():
         socketio.emit(
             "path_error", {"message": "База недоступна! Шлях заблоковано стінами."}
         )
+
+
+@socketio.on("clear_map")
+def handle_clear_map():
+    """Повністю очищає карту від перешкод"""
+    global grid
+    print("🧹 Очищення карти...")
+
+    # Створюємо нову чисту матрицю
+    grid = [[0 for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
+
+    # Відправляємо оновлену карту клієнтам
+    socketio.emit(
+        "map_data", {"width": GRID_WIDTH, "height": GRID_HEIGHT, "grid": grid}
+    )
+
+    # Якщо робот кудись їхав, перераховуємо йому прямий маршрут
+    if robot.status == "moving" and robot.path:
+        target = robot.path[-1]
+        new_path = astar(grid, (robot.x, robot.y), target)
+        if new_path:
+            robot.set_path(new_path)
+            socketio.emit("path_found", {"path": new_path})
+
+
+@socketio.on("generate_maze")
+def handle_generate_maze(data):
+    """Генерує випадкові перешкоди на карті з вказаною щільністю"""
+    global grid
+    density = data.get("density", 0.2)  # Наприклад, 0.25 (це 25%)
+    print(f"🎲 Генерація лабіринту (щільність {density*100}%)...")
+
+    target = robot.path[-1] if robot.path else None
+
+    for y in range(GRID_HEIGHT):
+        for x in range(GRID_WIDTH):
+            # ЗАХИСТ: Не ставимо стіни на базу(0,0), на самого робота та на його ціль
+            if (
+                (x == 0 and y == 0)
+                or (x == robot.x and y == robot.y)
+                or (target and x == target[0] and y == target[1])
+            ):
+                grid[y][x] = 0
+            else:
+                # Генеруємо стіну з ймовірністю = density
+                grid[y][x] = 1 if random.random() < density else 0
+
+    socketio.emit(
+        "map_data", {"width": GRID_WIDTH, "height": GRID_HEIGHT, "grid": grid}
+    )
+
+    # ПЕРЕРАХУНОК: Якщо робот їде, змушуємо його знайти новий шлях через лабіринт
+    if robot.status == "moving" and target:
+        new_path = astar(grid, (robot.x, robot.y), target)
+        if new_path:
+            robot.set_path(new_path)
+            socketio.emit("path_found", {"path": new_path})
+        else:
+            robot.set_path([])
+            robot.status = "error"
+            socketio.emit("path_found", {"path": []})
+            socketio.emit(
+                "path_error", {"message": "Згенерований лабіринт заблокував шлях!"}
+            )
 
 
 if __name__ == "__main__":

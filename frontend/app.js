@@ -12,6 +12,7 @@ createApp({
         const gridHeight = ref(20);
         const mapGrid = ref([]);
         const currentPath = ref([]);
+        const mazeDensity = ref(20);
 
         let canvas, ctx, socket;
 
@@ -133,6 +134,17 @@ createApp({
             socket.emit('recharge');
         };
 
+        const clearMap = () => {
+            if (!isConnected.value) return;
+            socket.emit('clear_map');
+        };
+
+        const generateMaze = () => {
+            if (!isConnected.value) return;
+            // Переводимо відсотки (20) у десятковий дріб (0.2) для бекенду
+            socket.emit('generate_maze', { density: mazeDensity.value / 100 });
+        };
+
         // --- ІНІЦІАЛІЗАЦІЯ ПРИ ЗАВАНТАЖЕННІ СТОРІНКИ ---
         onMounted(() => {
             canvas = document.getElementById('gridCanvas');
@@ -186,7 +198,10 @@ createApp({
             handleLeftClick,
             handleRightClick,
             emergencyStop,
-            recharge
+            recharge,
+            mazeDensity,
+            clearMap,
+            generateMaze
         };
     }
 }).mount('#app');

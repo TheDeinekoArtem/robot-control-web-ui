@@ -34,6 +34,13 @@
                 <h3>Керування</h3>
                 <button @click="emergencyStop" class="btn-danger">Екстрена Зупинка</button>
                 <button @click="recharge" class="btn-success" style="margin-top: 10px;">⚡ Підзарядити</button>
+                <h3>Середовище</h3>
+                <div class="slider-container">
+                    <label for="densitySlider">Щільність перешкод: <strong>{{ mazeDensity }}%</strong></label>
+                    <input type="range" id="densitySlider" v-model="mazeDensity" min="5" max="40" step="1">
+                </div>
+                <button @click="generateMaze" class="btn-primary" style="margin-top: 10px;">🎲 Згенерувати лабіринт</button>
+                <button @click="clearMap" class="btn-secondary" style="margin-top: 10px;">🧹 Очистити карту</button>
             </div>
             
             <div class="connection-status" :class="{ 'connected': isConnected }">
