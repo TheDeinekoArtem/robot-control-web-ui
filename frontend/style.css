@@ -222,74 +222,145 @@ input[type=range]::-webkit-slider-thumb {
     border-color: #cba6f7;
 }
 
-/* --- ТУЛТИП (ІНФО-ПІДКАЗКА) --- */
+/* --- КРУГЛА ІКОНКА ТА ТАБЛИЧНА ПІДКАЗКА (ФІНАЛЬНИЙ ВАРІАНТ) --- */
+
 .section-header-with-info {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     margin-bottom: 15px;
-    border-bottom: 1px solid #313244;
-    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(69, 71, 90, 0.5);
+    padding-bottom: 8px;
 }
 
 .section-header-with-info h3 {
     margin: 0;
-    border-bottom: none; /* Прибираємо стандартний бордер, бо він тепер у батьківського блоку */
-    padding-bottom: 0;
+    border-bottom: none;
 }
 
+/* Контейнер підказки */
 .info-tooltip {
     position: relative;
-    display: inline-block;
-    cursor: help; /* Курсор перетворюється на знак питання */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
 }
 
-.info-icon {
-    font-size: 1.1em;
-    opacity: 0.7;
-    transition: 0.2s;
+/* Кругла іконка "i" */
+.info-icon-circle {
+    width: 22px;
+    height: 22px;
+    border: 1.5px solid rgba(205, 214, 244, 0.4);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: "Georgia", serif;
+    font-style: italic;
+    font-size: 14px;
+    color: rgba(205, 214, 244, 0.8);
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.03);
 }
 
-.info-tooltip:hover .info-icon {
-    opacity: 1;
+/* Ефект при наведенні на іконку */
+.info-tooltip:hover .info-icon-circle {
+    border-color: #cba6f7;
+    color: #cba6f7;
+    background: rgba(203, 166, 247, 0.1);
+    box-shadow: 0 0 10px rgba(203, 166, 247, 0.2);
 }
 
-/* Сама плашка з текстом підказки */
+/* Плашка підказки */
 .tooltip-text {
     visibility: hidden;
-    width: 220px;
-    background-color: #313244;
-    color: #cdd6f4;
-    text-align: left;
-    border-radius: 8px;
-    padding: 10px;
-    position: absolute;
-    z-index: 1001;
-    bottom: 150%; /* З'являється чітко над іконкою */
-    left: 50%;
-    margin-left: -110px; /* Центруємо тултип відносно іконки */
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-    font-size: 0.85em;
-    line-height: 1.5;
-    border: 1px solid #45475a;
     opacity: 0;
-    transition: opacity 0.3s;
+    position: absolute;
+    bottom: 150%; /* З'являється над іконкою */
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    width: 300px; /* Ширина для таблиці */
+    background-color: #1e1e2e; /* Темний насичений фон */
+    backdrop-filter: blur(12px);
+    color: #cdd6f4;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid #45475a;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    z-index: 10000; /* Максимальний пріоритет над усім */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none; /* Щоб підказка не заважала мишці */
 }
 
-/* Маленька стрілочка вниз для тултипу */
+/* Стрілочка підказки */
 .tooltip-text::after {
     content: "";
     position: absolute;
     top: 100%;
     left: 50%;
-    margin-left: -5px;
-    border-width: 5px;
+    transform: translateX(-50%);
+    border-width: 8px;
     border-style: solid;
-    border-color: #313244 transparent transparent transparent;
+    border-color: #45475a transparent transparent transparent;
 }
 
-/* Показуємо підказку при наведенні миші */
+.tooltip-title {
+    font-weight: bold;
+    color: #cba6f7;
+    margin-bottom: 12px;
+    font-size: 0.95em;
+    border-bottom: 1px solid #313244;
+    padding-bottom: 6px;
+    display: block;
+}
+
+/* Таблиця всередині підказки */
+.tooltip-grid {
+    display: grid;
+    grid-template-columns: 80px 80px 60px 50px; /* Рівні колонки */
+    gap: 8px 4px;
+    align-items: center;
+    font-size: 0.85em;
+}
+
+.tooltip-grid .lvl { color: #a6adc8; }
+.tooltip-grid .speed { font-weight: bold; color: #cdd6f4; }
+.tooltip-grid .desc { color: #f9e2af; font-size: 0.85em; }
+.tooltip-grid .delay { 
+    color: #a6e3a1; 
+    font-family: monospace; 
+    text-align: right;
+    background: rgba(166, 227, 161, 0.1);
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+/* Активація при наведенні */
 .info-tooltip:hover .tooltip-text {
     visibility: visible;
     opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Стиль для підсвічування вибраного рівня */
+.active-row {
+    color: #cba6f7 !important; /* Фіолетовий колір тексту */
+    font-weight: bold !important;
+    text-shadow: 0 0 8px rgba(203, 166, 247, 0.4);
+    transition: all 0.2s ease;
+}
+
+/* Окремий стиль для плашки delay в активному рядку */
+.active-row-delay {
+    background: rgba(203, 166, 247, 0.25) !important; /* Фіолетовий фон для секунд */
+    color: #ffffff !important;
+    font-weight: bold;
+    box-shadow: 0 0 5px rgba(203, 166, 247, 0.3);
+    transform: scale(1.1); /* Трохи збільшимо плашку */
+}
+
+/* Додамо легке підсвічування всього ряду при наведенні (необов'язково, але приємно) */
+.tooltip-grid span {
+    padding: 2px 0;
 }

@@ -69,19 +69,46 @@
                         </div>
                     </div>
 
-                    <!-- 2. Блок налаштування симуляції (Тепер тут!) -->
+                   <!-- 2. Блок налаштування симуляції -->
                     <div class="modal-section">
                         <div class="section-header-with-info">
                             <h3>Симуляція</h3>
                             <div class="info-tooltip">
-                                <span class="info-icon">ℹ️</span>
+                                <div class="info-icon-circle">i</div>
+                                
                                 <div class="tooltip-text">
-                                    <strong>Швидкість (клітинок/сек):</strong><br>
-                                    Рівень 1: 1.0 кл/с (повільно)<br>
-                                    Рівень 2: ~1.3 кл/с<br>
-                                    Рівень 3: 2.0 кл/с (норма)<br>
-                                    Рівень 4: 4.0 кл/с<br>
-                                    Рівень 5: 10.0 кл/с (турбо)
+                                    <div class="tooltip-title">Швидкість (клітинок/сек):</div>
+                                    <div class="tooltip-grid">
+                                        <!-- Рівень 1 -->
+                                        <span class="lvl" :class="{ 'active-row': simSpeed == 1 }">Рівень 1:</span> 
+                                        <span class="speed" :class="{ 'active-row': simSpeed == 1 }">1.0 кл/с</span> 
+                                        <span class="desc" :class="{ 'active-row': simSpeed == 1 }">(повільно)</span> 
+                                        <span class="delay" :class="{ 'active-row-delay': simSpeed == 1 }">1.0s</span>
+
+                                        <!-- Рівень 2 -->
+                                        <span class="lvl" :class="{ 'active-row': simSpeed == 2 }">Рівень 2:</span> 
+                                        <span class="speed" :class="{ 'active-row': simSpeed == 2 }">~1.3 кл/с</span> 
+                                        <span class="desc" :class="{ 'active-row': simSpeed == 2 }"></span> 
+                                        <span class="delay" :class="{ 'active-row-delay': simSpeed == 2 }">0.75s</span>
+
+                                        <!-- Рівень 3 -->
+                                        <span class="lvl" :class="{ 'active-row': simSpeed == 3 }">Рівень 3:</span> 
+                                        <span class="speed" :class="{ 'active-row': simSpeed == 3 }">2.0 кл/с</span> 
+                                        <span class="desc" :class="{ 'active-row': simSpeed == 3 }">(норма)</span> 
+                                        <span class="delay" :class="{ 'active-row-delay': simSpeed == 3 }">0.5s</span>
+
+                                        <!-- Рівень 4 -->
+                                        <span class="lvl" :class="{ 'active-row': simSpeed == 4 }">Рівень 4:</span> 
+                                        <span class="speed" :class="{ 'active-row': simSpeed == 4 }">4.0 кл/с</span> 
+                                        <span class="desc" :class="{ 'active-row': simSpeed == 4 }"></span> 
+                                        <span class="delay" :class="{ 'active-row-delay': simSpeed == 4 }">0.25s</span>
+
+                                        <!-- Рівень 5 -->
+                                        <span class="lvl" :class="{ 'active-row': simSpeed == 5 }">Рівень 5:</span> 
+                                        <span class="speed" :class="{ 'active-row': simSpeed == 5 }">10.0 кл/с</span> 
+                                        <span class="desc" :class="{ 'active-row': simSpeed == 5 }">(турбо)</span> 
+                                        <span class="delay" :class="{ 'active-row-delay': simSpeed == 5 }">0.1s</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
