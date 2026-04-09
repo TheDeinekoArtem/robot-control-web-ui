@@ -43,15 +43,22 @@ createApp({
                 }
             }
 
+            // --- ВІЗУАЛІЗАЦІЯ ЛІНІЇ МАРШРУТУ ---
             if (currentPath.value.length > 0) {
+                const rx = robot.value.x * cellW + cellW / 2;
+                const ry = robot.value.y * cellH + cellH / 2;
+
                 ctx.strokeStyle = '#a6e3a1'; 
                 ctx.lineWidth = 4;
                 ctx.beginPath();
-                currentPath.value.forEach((point, index) => {
+                
+                // Починаємо малювати ВІД РОБОТА
+                ctx.moveTo(rx, ry); 
+
+                currentPath.value.forEach((point) => {
                     const cx = point[0] * cellW + cellW / 2;
                     const cy = point[1] * cellH + cellH / 2;
-                    if (index === 0) ctx.moveTo(cx, cy);
-                    else ctx.lineTo(cx, cy);
+                    ctx.lineTo(cx, cy);
                 });
                 ctx.stroke();
             }
@@ -164,11 +171,19 @@ createApp({
             });
 
             socket.on('robot_state', (data) => {
-                robot.value = data;
-                if (data.status === 'idle') {
-                    currentPath.value = []; 
+                // ЛОГІКА КРОКУ №1: Синхронізація лінії з рухом
+                if (data.x !== robot.value.x || data.y !== robot.value.y) {
+                    if (currentPath.value.length > 0) {
+                        const nextPoint = currentPath.value[0];
+                        // Якщо робот наступив на першу точку з масиву шляху — видаляємо її
+                        if (data.x === nextPoint[0] && data.y === nextPoint[1]) {
+                            currentPath.value.shift(); 
+                        }
+                    }
                 }
-                draw();
+                
+                robot.value = data; // Оновлюємо позицію робота
+                draw(); // Перемальовуємо канвас
             });
 
             socket.on('path_found', (data) => {
