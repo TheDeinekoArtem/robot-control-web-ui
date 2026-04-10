@@ -66,6 +66,22 @@ def handle_connect():
     socketio.emit("robot_state", robot.get_state())
 
 
+# --- ОБРОБНИК ДЛЯ СИНХРОНІЗАЦІЇ ПРИ ПІДКЛЮЧЕННІ ---
+@socketio.on("get_initial_state")
+def handle_get_initial_state():
+    """Відправка актуальних даних карти та робота при запиті клієнта"""
+    socketio.emit(
+        "initial_data",
+        {
+            "width": GRID_WIDTH,
+            "height": GRID_HEIGHT,
+            "grid": grid,
+            "robot": robot.get_state(),
+            "currentPath": robot.path,  # Передаємо шлях, який зараз у робота
+        },
+    )
+
+
 @socketio.on("set_target")
 def handle_set_target(data):
     """Отримуємо координати від клієнта, куди треба поїхати"""

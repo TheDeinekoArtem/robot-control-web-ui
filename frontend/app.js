@@ -156,7 +156,20 @@ createApp({
             socket = io('http://127.0.0.1:5000');
 
             socket.on('connect', () => {
-                isConnected.value = true;
+            isConnected.value = true;
+            // Запитуємо повний стан системи відразу після з'єднання
+            socket.emit('get_initial_state'); 
+             });
+
+             // Обробка отриманих початкових даних
+            socket.on('initial_data', (data) => {
+                gridWidth.value = data.width;
+                gridHeight.value = data.height;
+                mapGrid.value = data.grid;
+                robot.value = data.robot;
+                // Якщо шлях існує, записуємо його
+                currentPath.value = data.currentPath || [];
+                draw(); // Обов'язково перемальовуємо карту
             });
 
             socket.on('disconnect', () => {
