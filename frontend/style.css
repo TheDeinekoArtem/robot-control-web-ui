@@ -364,3 +364,41 @@ input[type=range]::-webkit-slider-thumb {
 .tooltip-grid span {
     padding: 2px 0;
 }
+
+/* --- СТИЛІ ЛЕГЕНДИ КАРТИ --- */
+.legend-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Три колонки */
+    gap: 15px 10px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid rgba(69, 71, 90, 0.3);
+}
+
+.legend-item { 
+    display: flex; 
+    align-items: center; 
+    gap: 8px; 
+    font-size: 0.85em; 
+    color: #bac2de; 
+}
+
+/* Базовий квадратик для іконок */
+.dot { 
+    width: 12px; 
+    height: 12px; 
+    border-radius: 3px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-size: 8px; 
+}
+
+/* Кольори та форми, що відповідають canvas */
+.robot { background: #89b4fa; border-radius: 50%; box-shadow: 0 0 6px #89b4fa; }
+.target { background: rgba(243, 139, 168, 0.3); border: 1.5px solid #f38ba8; border-radius: 50%; }
+.base { background: #f9e2af; color: #11111b; font-weight: bold; }
+.wall { background: #cdd6f4; }
+.path { background: #a6e3a1; height: 4px; }
+.trail { background: rgba(137, 180, 250, 0.2); }
