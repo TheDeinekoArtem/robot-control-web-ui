@@ -22,7 +22,8 @@ createApp({
 
         let canvas, ctx, socket;
 
-        // --- ФУНКЦІЯ МАЛЮВАННЯ НА CANVAS ---
+        // --- ФУНКЦІЯ МАЛЮВАННЯ НА CANVAS (Крок 5: Сучасний візуал) ---
+       // --- ФУНКЦІЯ МАЛЮВАННЯ НА CANVAS (Фінальний візуал + Fixed Logic) ---
         const draw = () => {
             if (!ctx) return;
             
@@ -31,8 +32,13 @@ createApp({
             const cellW = width / gridWidth.value;
             const cellH = height / gridHeight.value;
 
+            // 0. Розраховуємо координати робота ВІДРАЗУ, щоб всі блоки їх бачили
+            const rx = robot.value.x * cellW + cellW / 2;
+            const ry = robot.value.y * cellH + cellH / 2;
+
             ctx.clearRect(0, 0, width, height);
 
+            // 1. СІТКА ТА СТІНИ
             for (let y = 0; y < gridHeight.value; y++) {
                 for (let x = 0; x < gridWidth.value; x++) {
                     ctx.strokeStyle = '#45475a';
@@ -40,64 +46,121 @@ createApp({
                     ctx.strokeRect(x * cellW, y * cellH, cellW, cellH);
                     
                     if (mapGrid.value[y] && mapGrid.value[y][x] === 1) {
-                        ctx.fillStyle = '#cdd6f4'; 
-                        ctx.fillRect(x * cellW, y * cellH, cellW, cellH);
+                        let wallGrd = ctx.createLinearGradient(x * cellW, y * cellH, (x + 1) * cellW, (y + 1) * cellH);
+                        wallGrd.addColorStop(0, '#cdd6f4');
+                        wallGrd.addColorStop(1, '#a6adc8');
+                        ctx.fillStyle = wallGrd; 
+                        ctx.fillRect(x * cellW + 1, y * cellH + 1, cellW - 2, cellH - 2);
                     }
                 }
             }
 
-            // --- ВІЗУАЛІЗАЦІЯ ЛІНІЇ МАРШРУТУ ---
-            if (currentPath.value.length > 0) {
-                const rx = robot.value.x * cellW + cellW / 2;
-                const ry = robot.value.y * cellH + cellH / 2;
+            // 2. СУЧАСНА БАЗА (Зарядна станція 0,0)
+            ctx.save();
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#f9e2af';
+            
+            // Градієнт для ефекту скляної панелі
+            let baseGrd = ctx.createLinearGradient(4, 4, cellW - 4, cellH - 4);
+            baseGrd.addColorStop(0, '#f9e2af');
+            baseGrd.addColorStop(0.5, '#fdf1d6');
+            baseGrd.addColorStop(1, '#fab387');
 
-                ctx.strokeStyle = '#a6e3a1'; 
-                ctx.lineWidth = 4;
+            ctx.fillStyle = baseGrd;
+            if (ctx.roundRect) {
                 ctx.beginPath();
-                
-                // Починаємо малювати ВІД РОБОТА
-                ctx.moveTo(rx, ry); 
-
-                currentPath.value.forEach((point) => {
-                    const cx = point[0] * cellW + cellW / 2;
-                    const cy = point[1] * cellH + cellH / 2;
-                    ctx.lineTo(cx, cy);
-                });
-                ctx.stroke();
+                ctx.roundRect(4, 4, cellW - 8, cellH - 8, 8);
+                ctx.fill();
+            } else {
+                ctx.fillRect(4, 4, cellW - 8, cellH - 8);
             }
 
-            // ПОВЕРНУЛИ ТВОЮ ПРОЗОРІСТЬ 0.050
+            ctx.strokeStyle = 'rgba(17, 17, 27, 0.4)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#11111b';
+            ctx.font = `bold ${cellH / 1.7}px "Segoe UI Symbol", Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText('⚡', cellW / 2 + 1, cellH / 1.35 + 1); 
+            ctx.restore();
+
+            // 3. СЛІД (Trail)
             if (robot.value.history && robot.value.history.length > 0) {
                 ctx.beginPath();
-                ctx.strokeStyle = 'rgba(137, 180, 250, 0.050)'; 
-                ctx.lineWidth = cellW / 3; 
+                ctx.strokeStyle = 'rgba(137, 180, 250, 0.06)'; 
+                ctx.lineWidth = cellW / 2.5; 
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
 
-                const startX = robot.value.history[0][0] * cellW + cellW / 2;
-                const startY = robot.value.history[0][1] * cellH + cellH / 2;
-                ctx.moveTo(startX, startY);
-
+                ctx.moveTo(robot.value.history[0][0] * cellW + cellW / 2, robot.value.history[0][1] * cellH + cellH / 2);
                 for (let i = 1; i < robot.value.history.length; i++) {
-                    const px = robot.value.history[i][0] * cellW + cellW / 2;
-                    const py = robot.value.history[i][1] * cellH + cellH / 2;
-                    ctx.lineTo(px, py);
+                    ctx.lineTo(robot.value.history[i][0] * cellW + cellW / 2, robot.value.history[i][1] * cellH + cellH / 2);
                 }
-
-                const currentX = robot.value.x * cellW + cellW / 2;
-                const currentY = robot.value.y * cellH + cellH / 2;
-                ctx.lineTo(currentX, currentY);
-
+                ctx.lineTo(rx, ry);
                 ctx.stroke();
             }
 
-            const rx = robot.value.x * cellW + cellW / 2;
-            const ry = robot.value.y * cellH + cellH / 2;
+            // 4. МАРШРУТ ТА ЦІЛЬ
+            if (currentPath.value.length > 0) {
+                ctx.strokeStyle = '#a6e3a1'; 
+                ctx.lineWidth = 4;
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = '#a6e3a1';
+                ctx.beginPath();
+                ctx.moveTo(rx, ry); 
+
+                currentPath.value.forEach((point) => {
+                    ctx.lineTo(point[0] * cellW + cellW / 2, point[1] * cellH + cellH / 2);
+                });
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                const target = currentPath.value[currentPath.value.length - 1];
+                ctx.beginPath();
+                ctx.arc(target[0] * cellW + cellW / 2, target[1] * cellH + cellH / 2, cellW / 3, 0, Math.PI * 2);
+                ctx.strokeStyle = '#f38ba8';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                ctx.fillStyle = 'rgba(243, 139, 168, 0.2)';
+                ctx.fill();
+            }
+
+            // 5. РОБОТ (Agent)
+            ctx.save();
+            ctx.translate(rx, ry);
             
-            ctx.fillStyle = '#89b4fa';
+            if (currentPath.value.length > 0) {
+                const next = currentPath.value[0];
+                ctx.rotate(Math.atan2(next[1] - robot.value.y, next[0] - robot.value.x));
+            } else if (robot.value.history && robot.value.history.length > 0) {
+                const last = robot.value.history[robot.value.history.length - 1];
+                if (last[0] !== robot.value.x || last[1] !== robot.value.y) {
+                    ctx.rotate(Math.atan2(robot.value.y - last[1], robot.value.x - last[0]));
+                }
+            }
+
+            let robotGrd = ctx.createRadialGradient(0, 0, 2, 0, 0, cellW / 2.5);
+            robotGrd.addColorStop(0, '#b4befe');
+            robotGrd.addColorStop(1, '#89b4fa');
+            
+            ctx.fillStyle = robotGrd;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#89b4fa';
             ctx.beginPath();
-            ctx.arc(rx, ry, cellW / 2.5, 0, Math.PI * 2);
+            ctx.arc(0, 0, cellW / 2.5, 0, Math.PI * 2);
             ctx.fill();
+            ctx.shadowBlur = 0;
+
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.moveTo(cellW / 6, 0);
+            ctx.lineTo(-cellW / 10, -cellW / 10);
+            ctx.lineTo(-cellW / 10, cellW / 10);
+            ctx.fill();
+            
+            ctx.restore();
         };
 
         // --- ОБРОБНИКИ КЛІКІВ ---
