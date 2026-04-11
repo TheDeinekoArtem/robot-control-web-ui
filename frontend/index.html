@@ -5,13 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IoE Agent Control Dashboard</title>
     <link rel="stylesheet" href="style.css">
+    
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
 <body>
     <div id="app">
-        <!-- ГОЛОВНИЙ ДАШБОРД -->
         <div class="dashboard">
+            
             <div class="map-container">
                 <h2>Occupancy Grid Map</h2>
                 <p class="hint">Лівий клік: Встановити ціль | Правий клік: Додати/Видалити перешкоду</p>
@@ -22,7 +23,7 @@
             </div>
 
             <div class="telemetry-panel">
-                <!-- НОВИЙ ЗАГОЛОВОК З ІКОНКОЮ НАЛАШТУВАНЬ -->
+                
                 <div class="panel-header">
                     <h2>Телеметрія</h2>
                     <button @click="showModal = true" class="icon-btn" title="Налаштування та Журнал">⚙️</button>
@@ -44,6 +45,7 @@
                     </div>
 
                     <hr style="border: 0; border-top: 1px solid #45475a; margin: 10px 0;">
+                    
                     <p><strong>До цілі:</strong> {{ pathLength }} кл.</p>
                     <p><strong>Пробіг:</strong> {{ totalDistance }} кл.</p>
                 </div>
@@ -60,16 +62,16 @@
             </div>
         </div>
 
-        <!-- СПЛИВАЮЧЕ ВІКНО (МОДАЛКА) -->
         <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
             <div class="modal-content">
+                
                 <div class="modal-header">
                     <h2>⚙️ Розширені налаштування</h2>
                     <button class="close-btn" @click="showModal = false">✖</button>
                 </div>
                 
                 <div class="modal-body">
-                    <!-- 1. Блок середовища -->
+                    
                     <div class="modal-section">
                         <h3>Середовище</h3>
                         <div class="slider-container">
@@ -82,41 +84,35 @@
                         </div>
                     </div>
 
-                   <!-- 2. Блок налаштування симуляції -->
                     <div class="modal-section">
                         <div class="section-header-with-info">
                             <h3>Симуляція</h3>
+                            
                             <div class="info-tooltip">
                                 <div class="info-icon-circle">i</div>
-                                
                                 <div class="tooltip-text">
                                     <div class="tooltip-title">Швидкість (клітинок/сек):</div>
                                     <div class="tooltip-grid">
-                                        <!-- Рівень 1 -->
                                         <span class="lvl" :class="{ 'active-row': simSpeed == 1 }">Рівень 1:</span> 
                                         <span class="speed" :class="{ 'active-row': simSpeed == 1 }">1.0 кл/с</span> 
                                         <span class="desc" :class="{ 'active-row': simSpeed == 1 }">(повільно)</span> 
                                         <span class="delay" :class="{ 'active-row-delay': simSpeed == 1 }">1.0s</span>
 
-                                        <!-- Рівень 2 -->
                                         <span class="lvl" :class="{ 'active-row': simSpeed == 2 }">Рівень 2:</span> 
                                         <span class="speed" :class="{ 'active-row': simSpeed == 2 }">~1.3 кл/с</span> 
                                         <span class="desc" :class="{ 'active-row': simSpeed == 2 }"></span> 
                                         <span class="delay" :class="{ 'active-row-delay': simSpeed == 2 }">0.75s</span>
 
-                                        <!-- Рівень 3 -->
                                         <span class="lvl" :class="{ 'active-row': simSpeed == 3 }">Рівень 3:</span> 
                                         <span class="speed" :class="{ 'active-row': simSpeed == 3 }">2.0 кл/с</span> 
                                         <span class="desc" :class="{ 'active-row': simSpeed == 3 }">(норма)</span> 
                                         <span class="delay" :class="{ 'active-row-delay': simSpeed == 3 }">0.5s</span>
 
-                                        <!-- Рівень 4 -->
                                         <span class="lvl" :class="{ 'active-row': simSpeed == 4 }">Рівень 4:</span> 
                                         <span class="speed" :class="{ 'active-row': simSpeed == 4 }">4.0 кл/с</span> 
                                         <span class="desc" :class="{ 'active-row': simSpeed == 4 }"></span> 
                                         <span class="delay" :class="{ 'active-row-delay': simSpeed == 4 }">0.25s</span>
 
-                                        <!-- Рівень 5 -->
                                         <span class="lvl" :class="{ 'active-row': simSpeed == 5 }">Рівень 5:</span> 
                                         <span class="speed" :class="{ 'active-row': simSpeed == 5 }">10.0 кл/с</span> 
                                         <span class="desc" :class="{ 'active-row': simSpeed == 5 }">(турбо)</span> 
@@ -125,6 +121,7 @@
                                 </div>
                             </div>
                         </div>
+                        
                         <div class="slider-container">
                             <label for="speedSlider">Швидкість агента: <strong>Рівень {{ simSpeed }}</strong></label>
                             <input type="range" id="speedSlider" v-model="simSpeed" @input="changeSpeed" min="1" max="5" step="1">
@@ -140,20 +137,23 @@
                         <div class="legend-item"><span class="dot trail"></span> Слід</div>
                     </div>
 
-                    <!-- 3. Блок Терміналу -->
-                   <div class="modal-section log-section">
+                    <div class="modal-section log-section">
                         <div class="terminal-header-wrapper">
                             <h3>Термінал подій</h3>
                             <button @click="exportLogs" class="btn-export-compact">💾 Експорт</button>
                         </div>
+                        
                         <div class="log-panel">
                             <div class="log-container">
                                 <div v-for="(log, index) in logs" :key="index" :class="['log-entry', log.type]">
                                     <span class="log-time">[{{ log.time }}]</span> {{ log.message }}
                                 </div>
+                                
+                                <div v-if="logs.length === 0" class="log-entry" style="color:#6c7086; border-left:none;">Очікування подій...</div>
                             </div>
                         </div>
                     </div>
+                    
                 </div>
             </div>
         </div>
