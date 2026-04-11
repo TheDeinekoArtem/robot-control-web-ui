@@ -213,6 +213,28 @@ createApp({
             socket.emit('set_speed', { speed: simSpeed.value });
         };
 
+        const exportLogs = () => {
+            const reportHeader = `IOE AGENT MISSION REPORT\n` +
+                                `Date: ${new Date().toLocaleDateString()}\n` +
+                                `--------------------------\n`;
+            
+            // Format each log line for the text file
+            const content = logs.value.map(l => `[${l.time}] ${l.message}`).join('\n');
+            
+            const blob = new Blob([reportHeader + content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            // Set filename with current timestamp
+            const timestamp = new Date().getHours() + '-' + new Date().getMinutes();
+            a.href = url;
+            a.download = `robot_mission_log_${timestamp}.txt`;
+            a.click();
+            
+            // Clean up resources
+            URL.revokeObjectURL(url);
+        };
+
         // --- ІНІЦІАЛІЗАЦІЯ ---
         onMounted(() => {
             canvas = document.getElementById('gridCanvas');
@@ -286,10 +308,22 @@ createApp({
             });
 
             socket.on('server_log', (data) => {
-                logs.value.unshift(data); 
-                if (logs.value.length > 50) {
-                    logs.value.pop();
+                let type = 'info'; // Default type
+                
+                // Categorization logic based on message content
+                if (data.message.includes('❌') || data.message.includes('немає') || data.message.includes('Зупинка')) {
+                    type = 'error';
+                } else if (data.message.includes('✅') || data.message.includes('🔋')) {
+                    type = 'success';
+                } else if (data.message.includes('⚠️') || data.message.includes('Перерахунок')) {
+                    type = 'warning';
                 }
+
+                // Add formatted log object to the start of the array
+                logs.value.unshift({ ...data, type }); 
+                
+                // Keep only last 100 entries to maintain performance
+                if (logs.value.length > 100) logs.value.pop();
             });
         });
 
@@ -308,7 +342,8 @@ createApp({
             simSpeed,
             changeSpeed,
             totalDistance, 
-            pathLength
+            pathLength,
+            exportLogs
         };
     }
 }).mount('#app');

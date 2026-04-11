@@ -171,12 +171,35 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 /* Термінал */
+.log-section {
+    display: flex;
+    flex-direction: column;
+    /* Змушуємо секцію займати залишок місця, але не вилазити за межі */
+    min-height: 0; 
+}
+
+.terminal-header-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.terminal-header-wrapper h3 {
+    margin: 0;
+    border-bottom: none; /* Прибираємо лінію під заголовком, бо вона є біля кнопки */
+}
+
 .log-panel {
     background-color: #11111b;
     border: 1px solid #45475a;
     border-radius: 8px;
     padding: 15px;
+    /* Важливо: дозволяємо панелі звужуватися/розширюватися */
+    flex-grow: 1;
+    min-height: 0;
 }
+
 .log-container {
     overflow-y: auto;
     font-family: 'Courier New', Courier, monospace;
@@ -184,6 +207,8 @@ input[type=range]::-webkit-slider-thumb {
     display: flex;
     flex-direction: column;
     gap: 6px;
+    /* Жорстко фіксуємо висоту, щоб не вилазило */
+    height: 250px; 
 }
 .log-container::-webkit-scrollbar { width: 6px; }
 .log-container::-webkit-scrollbar-thumb { background-color: #45475a; border-radius: 3px; }
@@ -429,3 +454,90 @@ input[type=range]::-webkit-slider-thumb {
     transition: transform 0.1s;
 }
 .btn-success:active { transform: scale(0.95); }
+
+/* --- SEMANTIC LOG COLORS --- */
+.log-entry.error { color: #f38ba8; border-left: 2px solid #f38ba8; padding-left: 10px; }
+.log-entry.success { color: #a6e3a1; border-left: 2px solid #a6e3a1; padding-left: 10px; }
+.log-entry.warning { color: #f9e2af; border-left: 2px solid #f9e2af; padding-left: 10px; }
+.log-entry.info { border-left: 2px solid #89b4fa; padding-left: 10px; }
+
+/* --- COMPACT EXPORT BUTTON --- */
+.btn-export {
+    background: #313244;
+    color: #cdd6f4;
+    border: 1px solid #45475a;
+    padding: 3px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.75em;
+    transition: all 0.2s;
+}
+
+.btn-export:hover {
+    background: #45475a;
+    color: #ffffff;
+    border-color: #585b70;
+}
+
+.btn-export:active {
+    transform: scale(0.95);
+}
+
+/* Layout for terminal header */
+.terminal-header-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+/* Компактна кнопка експорту */
+.btn-export-compact {
+    background: #313244;
+    color: #cdd6f4;
+    border: 1px solid #45475a;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8em;
+    transition: 0.2s;
+    width: auto; /* ВАЖЛИВО: не даємо кнопці розтягуватись */
+    white-space: nowrap; /* Текст не переноситься */
+}
+
+.btn-export-compact:hover {
+    background: #45475a;
+    border-color: #585b70;
+}
+
+/* Battery Alert Styles */
+.status-msg {
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 0.85em;
+    margin-top: 10px;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.status-msg.warning {
+    background: rgba(249, 226, 175, 0.1);
+    color: #f9e2af;
+    border-color: rgba(249, 226, 175, 0.3);
+}
+
+.status-msg.critical {
+    background: rgba(243, 139, 168, 0.15);
+    color: #f38ba8;
+    border-color: #f38ba8;
+    font-weight: bold;
+    animation: critical-glow 1s infinite alternate;
+}
+
+@keyframes critical-glow {
+    from { box-shadow: 0 0 2px #f38ba8; }
+    to { box-shadow: 0 0 10px #f38ba8; }
+}
+
+.crit-text { color: #f38ba8 !important; }
+.warn-text { color: #f9e2af !important; }

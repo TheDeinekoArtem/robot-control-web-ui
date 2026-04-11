@@ -31,8 +31,18 @@
                 <div class="status-card">
                     <p><strong>Статус:</strong> <span :class="robot.status">{{ robot.status }}</span></p>
                     <p><strong>Координати:</strong> ({{ robot.x }}, {{ robot.y }})</p>
-                    <p><strong>Батарея:</strong> {{ robot.battery }}%</p>
-                    <p v-if="robot.battery < 30" class="low-battery-warning">⚠️ Низький заряд! Поверніться на базу.</p>
+                    
+                    <p :class="{ 'warn-text': robot.battery < 30, 'crit-text': robot.battery < 15 }">
+                        <strong>Батарея:</strong> {{ robot.battery }}%
+                    </p>
+
+                    <div v-if="robot.battery < 15" class="status-msg critical">
+                        🚨 КРИТИЧНИЙ СТАН: Рівень енергії на межі відмови. Негайне повернення на док-станцію!
+                    </div>
+                    <div v-else-if="robot.battery < 30" class="status-msg warning">
+                        ⚠️ УВАГА: Низький рівень заряду. Рекомендується планова підзарядка.
+                    </div>
+
                     <hr style="border: 0; border-top: 1px solid #45475a; margin: 10px 0;">
                     <p><strong>До цілі:</strong> {{ pathLength }} кл.</p>
                     <p><strong>Пробіг:</strong> {{ totalDistance }} кл.</p>
@@ -131,14 +141,16 @@
                     </div>
 
                     <!-- 3. Блок Терміналу -->
-                    <div class="modal-section" style="flex-grow: 1; display: flex; flex-direction: column;">
-                        <h3>Термінал подій</h3>
-                        <div class="log-panel" style="margin-top: 0;">
-                            <div class="log-container" style="height: 250px;">
-                                <div v-for="(log, index) in logs" :key="index" class="log-entry">
+                   <div class="modal-section log-section">
+                        <div class="terminal-header-wrapper">
+                            <h3>Термінал подій</h3>
+                            <button @click="exportLogs" class="btn-export-compact">💾 Експорт</button>
+                        </div>
+                        <div class="log-panel">
+                            <div class="log-container">
+                                <div v-for="(log, index) in logs" :key="index" :class="['log-entry', log.type]">
                                     <span class="log-time">[{{ log.time }}]</span> {{ log.message }}
                                 </div>
-                                <div v-if="logs.length === 0" class="log-entry" style="color:#6c7086;">Очікування подій...</div>
                             </div>
                         </div>
                     </div>
