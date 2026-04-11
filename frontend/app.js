@@ -17,6 +17,9 @@ createApp({
         const showModal = ref(false);
         const simSpeed = ref(3);
 
+        const totalDistance = ref(0);
+        const pathLength = ref(0);
+
         let canvas, ctx, socket;
 
         // --- ФУНКЦІЯ МАЛЮВАННЯ НА CANVAS ---
@@ -161,46 +164,57 @@ createApp({
             socket.emit('get_initial_state'); 
              });
 
-             // Обробка отриманих початкових даних
+           // 1. Обробка початкових даних (F5 Sync)
             socket.on('initial_data', (data) => {
                 gridWidth.value = data.width;
                 gridHeight.value = data.height;
                 mapGrid.value = data.grid;
-                robot.value = data.robot;
-                // Якщо шлях існує, записуємо його
-                currentPath.value = data.currentPath || [];
-                draw(); // Обов'язково перемальовуємо карту
-            });
+                robot.value = data.robot; 
+                
+                // ВІДНОВЛЮЄМО ШВИДКІСТЬ ПРИ F5
+                if (data.speed) {
+                    simSpeed.value = data.speed;
+                }
+                
+                // ВІДНОВЛЮЄМО ПРОБІГ ПРИ F5
+                totalDistance.value = data.robot.total_distance || 0; 
 
-            socket.on('disconnect', () => {
-                isConnected.value = false;
+                if (data.currentPath) {
+                    currentPath.value = data.currentPath;
+                    pathLength.value = data.currentPath.length;
+                }
+                draw();
             });
 
             socket.on('map_data', (data) => {
                 gridWidth.value = data.width;
                 gridHeight.value = data.height;
                 mapGrid.value = data.grid;
+                
+                // Якщо сервер прислав швидкість разом із картою — оновлюємо її
+                if (data.speed) {
+                    simSpeed.value = data.speed; 
+                }
+                
+                draw(); // Малюємо нові перешкоди!
+            });
+
+            // 1. Оновлюємо стан робота (СЛУХАЄМО ТІЛЬКИ СЕРВЕР)
+            socket.on('robot_state', (data) => {
+                robot.value = data;
+                totalDistance.value = data.total_distance;
+                
+                // Беремо шлях напряму з бекенда. Більше ніяких умов!
+                currentPath.value = data.path || []; 
+                pathLength.value = currentPath.value.length;
+                
                 draw();
             });
 
-            socket.on('robot_state', (data) => {
-                // ЛОГІКА КРОКУ №1: Синхронізація лінії з рухом
-                if (data.x !== robot.value.x || data.y !== robot.value.y) {
-                    if (currentPath.value.length > 0) {
-                        const nextPoint = currentPath.value[0];
-                        // Якщо робот наступив на першу точку з масиву шляху — видаляємо її
-                        if (data.x === nextPoint[0] && data.y === nextPoint[1]) {
-                            currentPath.value.shift(); 
-                        }
-                    }
-                }
-                
-                robot.value = data; // Оновлюємо позицію робота
-                draw(); // Перемальовуємо канвас
-            });
-
+            // 2. Рахуємо довжину маршруту, коли він знайдений
             socket.on('path_found', (data) => {
                 currentPath.value = data.path;
+                pathLength.value = data.path.length;
                 draw();
             });
             
@@ -229,7 +243,9 @@ createApp({
             logs,
             showModal,
             simSpeed,
-            changeSpeed
+            changeSpeed,
+            totalDistance, 
+            pathLength
         };
     }
 }).mount('#app');

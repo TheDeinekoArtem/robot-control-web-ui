@@ -33,6 +33,9 @@
                     <p><strong>Координати:</strong> ({{ robot.x }}, {{ robot.y }})</p>
                     <p><strong>Батарея:</strong> {{ robot.battery }}%</p>
                     <p v-if="robot.battery < 30" class="low-battery-warning">⚠️ Низький заряд! Поверніться на базу.</p>
+                    <hr style="border: 0; border-top: 1px solid #45475a; margin: 10px 0;">
+                    <p><strong>До цілі:</strong> {{ pathLength }} кл.</p>
+                    <p><strong>Пробіг:</strong> {{ totalDistance }} кл.</p>
                 </div>
 
                 <div class="controls">

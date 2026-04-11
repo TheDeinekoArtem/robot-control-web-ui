@@ -6,6 +6,7 @@ class VirtualRobot:
         self.status = "idle"
         self.path = []
         self.history = []
+        self.total_distance = 0
 
     def set_path(self, new_path):
         self.path = new_path
@@ -69,6 +70,8 @@ class VirtualRobot:
             self.path.pop(0)
             self.battery -= step_cost
 
+            self.total_distance += 1
+
             if not self.path:
                 self.status = "idle"
 
@@ -83,4 +86,6 @@ class VirtualRobot:
             "battery": round(self.battery, 1),
             "status": self.status,
             "history": self.history,
+            "total_distance": self.total_distance,
+            "path": self.path,
         }

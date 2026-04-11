@@ -31,6 +31,7 @@ GRID_WIDTH = 20
 GRID_HEIGHT = 20
 grid = [[0 for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
 simulation_delay = 0.5
+current_speed_level = 3
 
 # Створюємо нашого робота у стартовій точці (0, 0)
 robot = VirtualRobot(start_x=0, start_y=0)
@@ -54,22 +55,25 @@ def simulation_loop():
 def handle_connect():
     global background_thread
     send_log("🟢 Клієнт (браузер) підключився!")
-
-    # Запускаємо фоновий цикл симуляції при першому підключенні
     if background_thread is None:
         background_thread = socketio.start_background_task(simulation_loop)
 
-    # Відправляємо клієнту розміри карти та саму матрицю з перешкодами
+    # Додаємо speed сюди теж для надійності
     socketio.emit(
-        "map_data", {"width": GRID_WIDTH, "height": GRID_HEIGHT, "grid": grid}
+        "map_data",
+        {
+            "width": GRID_WIDTH,
+            "height": GRID_HEIGHT,
+            "grid": grid,
+            "speed": current_speed_level,  # Додано
+        },
     )
     socketio.emit("robot_state", robot.get_state())
 
 
-# --- ОБРОБНИК ДЛЯ СИНХРОНІЗАЦІЇ ПРИ ПІДКЛЮЧЕННІ ---
 @socketio.on("get_initial_state")
 def handle_get_initial_state():
-    """Відправка актуальних даних карти та робота при запиті клієнта"""
+    """Відправка актуальних даних при F5"""
     socketio.emit(
         "initial_data",
         {
@@ -77,7 +81,8 @@ def handle_get_initial_state():
             "height": GRID_HEIGHT,
             "grid": grid,
             "robot": robot.get_state(),
-            "currentPath": robot.path,  # Передаємо шлях, який зараз у робота
+            "currentPath": robot.path,
+            "speed": current_speed_level,  # Вже було, залишаємо
         },
     )
 
@@ -200,7 +205,13 @@ def handle_clear_map():
 
     # Відправляємо оновлену карту клієнтам
     socketio.emit(
-        "map_data", {"width": GRID_WIDTH, "height": GRID_HEIGHT, "grid": grid}
+        "map_data",
+        {
+            "width": GRID_WIDTH,
+            "height": GRID_HEIGHT,
+            "grid": grid,
+            "speed": current_speed_level,  # Додано
+        },
     )
 
     # Якщо робот кудись їхав, перераховуємо йому прямий маршрут
@@ -235,7 +246,13 @@ def handle_generate_maze(data):
                 grid[y][x] = 1 if random.random() < density else 0
 
     socketio.emit(
-        "map_data", {"width": GRID_WIDTH, "height": GRID_HEIGHT, "grid": grid}
+        "map_data",
+        {
+            "width": GRID_WIDTH,
+            "height": GRID_HEIGHT,
+            "grid": grid,
+            "speed": current_speed_level,  # Додано
+        },
     )
 
     # ПЕРЕРАХУНОК: Якщо робот їде, змушуємо його знайти новий шлях через лабіринт
@@ -256,8 +273,9 @@ def handle_generate_maze(data):
 @socketio.on("set_speed")
 def handle_set_speed(data):
     """Змінює швидкість руху робота"""
-    global simulation_delay
+    global simulation_delay, current_speed_level
     speed_level = int(data.get("speed", 3))
+    current_speed_level = speed_level  # Запам'ятовуємо рівень
 
     # Словник затримок: 1=повільно(1с), 3=норма(0.5с), 5=турбо(0.1с)
     delays = {1: 1.0, 2: 0.75, 3: 0.5, 4: 0.25, 5: 0.1}
